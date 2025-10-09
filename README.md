@@ -18,7 +18,8 @@ Pour installer **SMTS**, téléchargez le binaire pour votre plateforme depuis l
 Exemple (Linux/macOS) :
 ```bash
 # Déplacer le binaire téléchargé dans /usr/local/bin pour y accéder depuis n'importe où
-mv smts-linux-amd64 /usr/local/bin/smts
+sudo mv smts-linux-amd64 /usr/local/bin/smts
+sudo chmod +x /usr/local/bin/smts
 ```
 
 ## Utilisation
