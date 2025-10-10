@@ -1,26 +1,24 @@
-package auth
+package sso
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/cookiejar"
-	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 type Session struct {
-	client *http.Client
-	User   *User
+	Client       *http.Client
+	SAMLResponse *SAMLResponse
 }
 
 func NewSession() *Session {
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{Jar: jar}
 
-	return &Session{client: client}
+	return &Session{Client: client}
 }
 
 func (s *Session) Login(username, password string) error {
@@ -34,16 +32,11 @@ func (s *Session) Login(username, password string) error {
 		return err
 	}
 
-	samlResp, err := s.getSAMLResponse(consentURL)
-	if err != nil {
-		return err
-	}
-
-	return s.finalizeLogin(samlResp)
+	return s.getSAMLResponse(consentURL)
 }
 
-func (s *Session) authenticate(samlReq *samlRequest, username, password string) (string, error) {
-	resp, err := s.client.PostForm(samlReq.url, map[string][]string{"SAMLRequest": {samlReq.value}})
+func (s *Session) authenticate(samlReq *SAMLRequest, username, password string) (string, error) {
+	resp, err := s.Client.PostForm(samlReq.URL, map[string][]string{"SAMLRequest": {samlReq.Value}})
 	if err != nil {
 		return "", err
 	}
@@ -61,7 +54,7 @@ func (s *Session) authenticate(samlReq *samlRequest, username, password string) 
 		return "", fmt.Errorf("unexpected error")
 	}
 
-	resp, err = s.client.PostForm(reqURL, map[string][]string{
+	resp, err = s.Client.PostForm(reqURL, map[string][]string{
 		"username":  {username},
 		"password":  {password},
 		"lt":        {lt},
@@ -88,43 +81,4 @@ func (s *Session) authenticate(samlReq *samlRequest, username, password string) 
 	}
 
 	return consentURL, nil
-}
-
-func (s *Session) finalizeLogin(samlResp *samlResponse) error {
-	form := url.Values{}
-	form.Add("SAMLResponse", samlResp.value)
-
-	req, err := http.NewRequest("POST", samlResp.url, strings.NewReader(form.Encode()))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	cookies := s.client.Jar.Cookies(req.URL)
-	cookieHeader := ""
-	for i, c := range cookies {
-		if i > 0 {
-			cookieHeader += "; "
-		}
-		cookieHeader += fmt.Sprintf("%s=%s", c.Name, c.Value)
-	}
-	cookieHeader += `; AuthenticationProvider={"Selected":"SAMLv2ProviderConfiguration"}`
-	req.Header.Set("Cookie", cookieHeader)
-
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if !strings.Contains(string(body), "Bandeau.aspx") {
-		return fmt.Errorf("unexpected error")
-	}
-
-	return nil
 }

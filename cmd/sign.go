@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"smts/internal/auth"
+	"smts/internal/pass"
 	"smts/internal/pdf"
+	"smts/internal/sso"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -30,18 +31,23 @@ var signCmd = &cobra.Command{
 			return fmt.Errorf("failed to get password: %w", err)
 		}
 
-		session := auth.NewSession()
+		session := sso.NewSession()
 		if err := session.Login(username, password); err != nil {
 			return fmt.Errorf("failed to login: %w", err)
 		}
 
-		cookies, reqURL, err := session.GetAgendaSession()
+		passClient := pass.NewClient(session.Client)
+		if err := passClient.Login(session.SAMLResponse); err != nil {
+			return fmt.Errorf("failed to login to PASS: %w", err)
+		}
+
+		cookies, reqURL, err := passClient.GetAgendaSession()
 		if err != nil {
 			return fmt.Errorf("failed to get agenda: %w", err)
 		}
 
 		_, week := time.Now().ISOWeek()
-		outputPath := fmt.Sprintf("%s %s – FIPA%d%s – S%d.pdf", session.User.LastName, session.User.FirstName, session.User.Year, session.User.Campus[0:1], week)
+		outputPath := fmt.Sprintf("%s %s – FIPA%d%s – S%d.pdf", passClient.User.LastName, passClient.User.FirstName, passClient.User.Year, passClient.User.Campus[0:1], week)
 		myPDF := pdf.New(outputPath)
 		if err := myPDF.Generate(cookies, reqURL); err != nil {
 			return fmt.Errorf("failed to generate PDF: %w", err)
@@ -50,7 +56,7 @@ var signCmd = &cobra.Command{
 		if err := myPDF.AddWatermark("Certifie sur l’honneur avoir été présent(e) sur les créneaux indiqués dans le planning.", 80, 80); err != nil {
 			return fmt.Errorf("failed to sign PDF: %w", err)
 		}
-		if err := myPDF.AddWatermark(fmt.Sprintf("%s %s", session.User.FirstName, session.User.LastName), 100, 60); err != nil {
+		if err := myPDF.AddWatermark(fmt.Sprintf("%s %s", passClient.User.FirstName, passClient.User.LastName), 100, 60); err != nil {
 			return fmt.Errorf("failed to sign PDF: %w", err)
 		}
 		if err := myPDF.AddSignature(signature); err != nil {

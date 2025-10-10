@@ -1,4 +1,4 @@
-package auth
+package pass
 
 import (
 	"fmt"
@@ -11,27 +11,27 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func (s *Session) GetAgendaSession() ([]*http.Cookie, string, error) {
-	grpID, err := s.getGroupID()
+func (c *Client) GetAgendaSession() ([]*http.Cookie, string, error) {
+	grpID, err := c.getGroupID()
 	if err != nil {
 		return nil, "", err
 	}
 
-	reqURL, html, err := s.getAgendaURL(grpID)
+	reqURL, html, err := c.getAgendaURL(grpID)
 	if err != nil {
 		return nil, "", err
 	}
 
-	s.User, err = s.getUserInfo(html)
+	c.User, err = c.getUserInfo(html)
 	if err != nil {
 		return nil, "", err
 	}
 
-	return s.client.Jar.Cookies(reqURL), reqURL.String(), nil
+	return c.httpClient.Jar.Cookies(reqURL), reqURL.String(), nil
 }
 
-func (s *Session) getGroupID() (string, error) {
-	resp, err := s.client.Get("https://pass.imt-atlantique.fr/OpDotNet/Noyau/Bandeau.aspx?")
+func (c *Client) getGroupID() (string, error) {
+	resp, err := c.httpClient.Get("https://pass.imt-atlantique.fr/OpDotNet/Noyau/Bandeau.aspx?")
 	if err != nil {
 		return "", err
 	}
@@ -51,8 +51,8 @@ func (s *Session) getGroupID() (string, error) {
 	return match[1], nil
 }
 
-func (s *Session) getAgendaURL(grpID string) (*url.URL, string, error) {
-	resp, err := s.client.Get("https://pass.imt-atlantique.fr/OpDotNet/Noyau/Content.aspx?groupe=" + grpID)
+func (c *Client) getAgendaURL(grpID string) (*url.URL, string, error) {
+	resp, err := c.httpClient.Get("https://pass.imt-atlantique.fr/OpDotNet/Noyau/Content.aspx?groupe=" + grpID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -68,7 +68,7 @@ func (s *Session) getAgendaURL(grpID string) (*url.URL, string, error) {
 		return nil, "", fmt.Errorf("unexpected error")
 	}
 
-	resp, err = s.client.Get("https://pass.imt-atlantique.fr" + iframeSrc)
+	resp, err = c.httpClient.Get("https://pass.imt-atlantique.fr" + iframeSrc)
 	if err != nil {
 		return nil, "", err
 	}
@@ -98,7 +98,7 @@ func (s *Session) getAgendaURL(grpID string) (*url.URL, string, error) {
 		formData.Add(name, value)
 	})
 
-	resp, err = s.client.PostForm(reqURL, formData)
+	resp, err = c.httpClient.PostForm(reqURL, formData)
 	if err != nil {
 		return nil, "", err
 	}

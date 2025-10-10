@@ -1,4 +1,4 @@
-package auth
+package pass
 
 import (
 	"fmt"
@@ -12,16 +12,16 @@ type User struct {
 	Year      int
 }
 
-func (s *Session) getUserInfo(body string) (*User, error) {
-	campus := analyze.DetectCampus(body)
+func (*Client) getUserInfo(html string) (*User, error) {
+	campus := analyze.DetectCampus(html)
 	if campus == "unknown" {
 		return nil, fmt.Errorf("could not detect campus")
 	}
-	year := analyze.DetectYear(body)
+	year := analyze.DetectYear(html)
 	if year == 0 {
 		return nil, fmt.Errorf("could not detect year")
 	}
-	firstName, lastName := analyze.DetectName(body)
+	firstName, lastName := analyze.DetectName(html)
 	if firstName == "" || lastName == "" {
 		return nil, fmt.Errorf("could not detect name")
 	}

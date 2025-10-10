@@ -3,6 +3,9 @@ package analyze
 import (
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func DetectCampus(html string) string {
@@ -15,7 +18,7 @@ func DetectCampus(html string) string {
 	if counts["Brest"] == 0 && counts["Nantes"] == 0 && counts["Rennes"] == 0 {
 		reCampus := regexp.MustCompile(`(?i)(Brest|Nantes|Rennes)`)
 		if match := reCampus.FindString(html); match != "" {
-			return strings.Title(strings.ToLower(match))
+			return cases.Title(language.French).String(strings.ToLower(match))
 		}
 		return "unknown"
 	}

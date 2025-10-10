@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/chromedp/cdproto v0.0.0-20250724212937-08a3db8b4327
+	golang.org/x/text v0.25.0
 )
 
 require (
@@ -28,7 +29,6 @@ require (
 	golang.org/x/image v0.27.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 

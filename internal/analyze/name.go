@@ -3,6 +3,9 @@ package analyze
 import (
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func DetectName(html string) (string, string) {
@@ -13,8 +16,8 @@ func DetectName(html string) (string, string) {
 		return "", ""
 	}
 
-	lastName := strings.Title(match[1])
-	firstName := strings.Title(strings.ToLower(match[2]))
+	lastName := cases.Title(language.French).String(strings.ToLower(match[1]))
+	firstName := cases.Title(language.French).String(match[2])
 
 	return firstName, lastName
 }

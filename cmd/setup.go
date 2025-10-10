@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"smts/internal/auth"
+	"smts/internal/sso"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ var setupCmd = &cobra.Command{
 		}
 		password := strings.TrimSpace(string(bytePassword))
 
-		session := auth.NewSession()
+		session := sso.NewSession()
 		if err := session.Login(username, password); err != nil {
 			return fmt.Errorf("failed to login: %w", err)
 		}
