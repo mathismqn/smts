@@ -47,7 +47,7 @@ var signCmd = &cobra.Command{
 		}
 
 		_, week := time.Now().ISOWeek()
-		outputPath := fmt.Sprintf("%s %s – FIPA%d%s – S%d.pdf", passClient.User.LastName, passClient.User.FirstName, passClient.User.Year, passClient.User.Campus[0:1], week)
+		outputPath := fmt.Sprintf("%s %s – FIPA3%s – S%d.pdf", passClient.User.LastName, passClient.User.FirstName, passClient.User.Campus[0:1], week)
 		myPDF := pdf.New(outputPath)
 		if err := myPDF.Generate(cookies, reqURL); err != nil {
 			return fmt.Errorf("failed to generate PDF: %w", err)

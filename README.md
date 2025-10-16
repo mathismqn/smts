@@ -1,6 +1,6 @@
 # SMTS - Sign Me This Shit
 
-Outil automatisé pour générer et signer les feuilles de présence des étudiants FIP d'IMT Atlantique.
+Outil automatisé pour générer et signer les feuilles de présence des étudiants FIP 3A d'IMT Atlantique.
 
 ## Prérequis
 
@@ -43,7 +43,7 @@ smts setup
 Cette commande vous demandera votre nom d'utilisateur et mot de passe IMT Atlantique. Ces informations sont nécessaires pour :
 - Se connecter automatiquement à votre agenda PASS
 - Récupérer votre planning de la semaine
-- Détecter automatiquement votre campus et année
+- Détecter automatiquement votre campus
 
 **Sécurité** : Vos identifiants sont stockés de manière sécurisée dans le trousseau de clés de votre système (Keychain sur macOS, Windows Credential Manager sur Windows, Secret Service sur Linux). Ils ne sont jamais envoyés ailleurs que sur les serveurs officiels d'IMT Atlantique.
 
@@ -60,4 +60,4 @@ Ou avec une signature personnalisée :
 smts sign --signature /chemin/vers/signature.png
 ```
 
-Le fichier PDF est automatiquement nommé : `NOM Prénom – FIPA[Année][Campus] – S[Semaine].pdf`
+Le fichier PDF est automatiquement nommé : `NOM Prénom – FIPA3[Campus] – S[Semaine].pdf`
