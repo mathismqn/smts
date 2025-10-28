@@ -11,14 +11,14 @@ type User struct {
 	Campus    string
 }
 
-func (*Client) getUserInfo(html string) (*User, error) {
+func (c *Client) parseUserInfo(html string) (*User, error) {
 	campus := analyze.DetectCampus(html)
 	if campus == "unknown" {
-		return nil, fmt.Errorf("could not detect campus")
+		return nil, fmt.Errorf("user information not found")
 	}
 	firstName, lastName := analyze.DetectName(html)
 	if firstName == "" || lastName == "" {
-		return nil, fmt.Errorf("could not detect name")
+		return nil, fmt.Errorf("user information not found")
 	}
 
 	return &User{

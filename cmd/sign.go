@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"smts/internal/cas"
+	"smts/internal/creds"
 	"smts/internal/pass"
 	"smts/internal/pdf"
-	"smts/internal/sso"
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/zalando/go-keyring"
 )
 
 var signCmd = &cobra.Command{
@@ -22,45 +22,41 @@ var signCmd = &cobra.Command{
 			return err
 		}
 
-		username, err := keyring.Get(service, "username")
+		credentials, err := creds.Load()
 		if err != nil {
-			return fmt.Errorf("failed to get username: %w", err)
-		}
-		password, err := keyring.Get(service, "password")
-		if err != nil {
-			return fmt.Errorf("failed to get password: %w", err)
+			return fmt.Errorf("failed to load credentials: %w", err)
 		}
 
-		session := sso.NewSession()
-		if err := session.Login(username, password); err != nil {
-			return fmt.Errorf("failed to login: %w", err)
+		casClient := cas.NewClient(httpClient)
+		if err := casClient.Login(credentials.Username, credentials.Password); err != nil {
+			return fmt.Errorf("failed to login to CAS: %w", err)
 		}
 
-		passClient := pass.NewClient(session.Client)
-		if err := passClient.Login(session.SAMLResponse); err != nil {
-			return fmt.Errorf("failed to login to PASS: %w", err)
+		passClient := pass.NewClient(httpClient)
+		if err := passClient.Authenticate(); err != nil {
+			return fmt.Errorf("failed to authenticate to PASS: %w", err)
 		}
 
-		cookies, reqURL, err := passClient.GetAgendaSession()
+		session, err := passClient.GetAgendaSession()
 		if err != nil {
 			return fmt.Errorf("failed to get agenda: %w", err)
 		}
 
 		_, week := time.Now().ISOWeek()
-		outputPath := fmt.Sprintf("%s %s – FIPA3%s – S%d.pdf", passClient.User.LastName, passClient.User.FirstName, passClient.User.Campus[0:1], week)
+		outputPath := fmt.Sprintf("%s %s – FIPA3%s – S%d.pdf", session.User.LastName, session.User.FirstName, session.User.Campus[0:1], week)
 		myPDF := pdf.New(outputPath)
-		if err := myPDF.Generate(cookies, reqURL); err != nil {
+		if err := myPDF.Generate(session.Cookies, session.URL); err != nil {
 			return fmt.Errorf("failed to generate PDF: %w", err)
 		}
 
-		if err := myPDF.AddWatermark("Certifie sur l’honneur avoir été présent(e) sur les créneaux indiqués dans le planning.", 80, 80); err != nil {
-			return fmt.Errorf("failed to sign PDF: %w", err)
+		if err := myPDF.AddWatermark("Certifie sur l'honneur avoir été présent(e) sur les créneaux indiqués dans le planning.", 80, 80); err != nil {
+			return fmt.Errorf("failed to add watermark to PDF: %w", err)
 		}
-		if err := myPDF.AddWatermark(fmt.Sprintf("%s %s", passClient.User.FirstName, passClient.User.LastName), 100, 60); err != nil {
-			return fmt.Errorf("failed to sign PDF: %w", err)
+		if err := myPDF.AddWatermark(fmt.Sprintf("%s %s", session.User.FirstName, session.User.LastName), 100, 60); err != nil {
+			return fmt.Errorf("failed to add watermark to PDF: %w", err)
 		}
 		if err := myPDF.AddSignature(signature); err != nil {
-			return fmt.Errorf("failed to sign PDF: %w", err)
+			return fmt.Errorf("failed to add signature to PDF: %w", err)
 		}
 
 		fmt.Printf("Signed attendance sheet generated: %s\n", outputPath)

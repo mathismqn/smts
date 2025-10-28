@@ -11,23 +11,33 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func (c *Client) GetAgendaSession() ([]*http.Cookie, string, error) {
+type AgendaSession struct {
+	Cookies []*http.Cookie
+	URL     string
+	User    *User
+}
+
+func (c *Client) GetAgendaSession() (*AgendaSession, error) {
 	grpID, err := c.getGroupID()
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	reqURL, html, err := c.getAgendaURL(grpID)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	c.User, err = c.getUserInfo(html)
+	user, err := c.parseUserInfo(html)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	return c.httpClient.Jar.Cookies(reqURL), reqURL.String(), nil
+	return &AgendaSession{
+		Cookies: c.httpClient.Jar.Cookies(reqURL),
+		URL:     reqURL.String(),
+		User:    user,
+	}, nil
 }
 
 func (c *Client) getGroupID() (string, error) {
@@ -51,30 +61,44 @@ func (c *Client) getGroupID() (string, error) {
 	return match[1], nil
 }
 
-func (c *Client) getAgendaURL(grpID string) (*url.URL, string, error) {
+func (c *Client) getAgendaForm(grpID string) (string, error) {
 	resp, err := c.httpClient.Get("https://pass.imt-atlantique.fr/OpDotNet/Noyau/Content.aspx?groupe=" + grpID)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	iframeSrc := doc.Find("iframe").AttrOr("src", "")
 	if iframeSrc == "" {
-		return nil, "", fmt.Errorf("unexpected error")
+		return "", fmt.Errorf("unexpected error")
 	}
 
 	resp, err = c.httpClient.Get("https://pass.imt-atlantique.fr" + iframeSrc)
 	if err != nil {
-		return nil, "", err
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	doc, err = goquery.NewDocumentFromReader(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
+}
+
+func (c *Client) getAgendaURL(grpID string) (*url.URL, string, error) {
+	html, err := c.getAgendaForm(grpID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
 		return nil, "", err
 	}
@@ -98,7 +122,7 @@ func (c *Client) getAgendaURL(grpID string) (*url.URL, string, error) {
 		formData.Add(name, value)
 	})
 
-	resp, err = c.httpClient.PostForm(reqURL, formData)
+	resp, err := c.httpClient.PostForm(reqURL, formData)
 	if err != nil {
 		return nil, "", err
 	}
