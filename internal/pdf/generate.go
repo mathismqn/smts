@@ -64,8 +64,8 @@ func getBuffer(ctx context.Context, cookies []*http.Cookie, reqUrl string) ([]by
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			buffer, _, err = page.PrintToPDF().
 				WithPrintBackground(true).
-				WithPaperWidth(8.27).   // Format A4
-				WithPaperHeight(11.67). // Format A4
+				WithPaperWidth(11.67). // A4 format
+				WithPaperHeight(8.27). // A4 format
 				WithMarginTop(0.4).
 				WithMarginBottom(0.4).
 				WithMarginLeft(0.4).
