@@ -10,7 +10,7 @@ func DetectName(html string) (string, string) {
 	re := regexp.MustCompile(`Agenda de l'utilisateur\s+([A-Z'-]+)\s+([A-Za-z'-]+)`)
 	match := re.FindStringSubmatch(html)
 	if len(match) < 3 {
-		return "", ""
+		return "unknown", "unknown"
 	}
 
 	return match[2], match[1]
