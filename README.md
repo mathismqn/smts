@@ -55,9 +55,32 @@ Cette commande vous demandera votre nom d'utilisateur et mot de passe IMT Atlant
 smts sign
 ```
 
-Ou avec une signature personnalisée :
+Le fichier PDF généré est automatiquement nommé : `NOM Prénom – FIPA3[Campus] – S[Semaine].pdf`
+
+Vous pouvez utiliser une signature personnalisée :
 ```bash
 smts sign --signature /chemin/vers/signature.png
 ```
 
-Le fichier PDF est automatiquement nommé : `NOM Prénom – FIPA3[Campus] – S[Semaine].pdf`
+#### Options avancées
+
+Vous pouvez personnaliser les informations de la feuille de présence avec les options suivantes :
+
+```bash
+# Spécifier un campus différent (Brest, Rennes, ou Nantes)
+smts sign --campus Rennes
+
+# Spécifier un nom personnalisé (prénom et nom requis ensemble)
+smts sign --firstname Jean --lastname DUPONT
+
+# Combiner plusieurs options
+smts sign --campus Brest --firstname Marie --lastname MARTIN --signature ma-signature.png
+```
+
+**Options disponibles :**
+- `--signature, -s` : chemin vers le fichier de signature (défaut: `signature.png`)
+- `--campus` : campus (Brest, Rennes, ou Nantes) - auto-détecté si non fourni
+- `--firstname` : prénom - auto-détecté si non fourni (requiert `--lastname`)
+- `--lastname` : nom de famille - auto-détecté si non fourni (requiert `--firstname`)
+
+**Note** : Par défaut, le campus et le nom sont automatiquement détectés depuis votre agenda PASS. Les options ci-dessus permettent de les remplacer si nécessaire.
